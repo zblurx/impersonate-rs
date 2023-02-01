@@ -1,4 +1,4 @@
-prog :=irs
+prog :=impersonate-rs
 
 cargo := $(shell command -v cargo 2> /dev/null)
 cargo_v := $(shell cargo -V| cut -d ' ' -f 2)
