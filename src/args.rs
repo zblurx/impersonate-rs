@@ -42,7 +42,7 @@ fn cli() -> Command {
                 .arg(Arg::new("command")
                     .short('c')
                     .long("command")
-                    .help("command to execute")
+                    .help("Command to execute")
                     .required(true)
                     .value_parser(value_parser!(String))
                 )

@@ -28,38 +28,49 @@ cargo doc --open --no-deps
 Like a static binary :
 
 ```bash
-.\impersonate-rs.exe --help
-Rusty Impersonate
+X:\>impersonate-rs.exe --help
+Usage: impersonate-rs.exe <COMMAND>
 
-Usage: impersonate-rs.exe [OPTIONS] <MODE>
-
-Arguments: <MODE>  list or exec
+Commands:
+  list  List all process PID available to impersonate Tokens
+  exec  Execute command line from impersonate PID
+  help  Print this message or the help of the given subcommand(s)
 
 Options:
-      --pid <PID>          pid to impersonate
-      --command <COMMAND>  command to execute
-      -h, --help               Print help
-      -V, --version            Print version 
+  -h, --help  Print help
+```
+
+```bash
+X:\>impersonate-rs.exe exec --help
+Execute command line from impersonate PID
+
+Usage: impersonate-rs.exe exec [OPTIONS] --pid <pid> --command <command>
+
+Options:
+  -p, --pid <pid>          PID to impersonate
+  -c, --command <command>  Command to execute
+  -v...                    Set the level of verbosity
+  -h, --help               Print help
 ```
 
 ### `list`
 
 The `list` command list processes, with their session id, token type and associated user.
 ```bash
-X:\>.\impersonate-rs.exe list
+X:\>impersonate-rs.exe list
                   
-[winlogon.exe]  [PROCESS: 508][SESSION: 1][TYPE: Primary][System] User: NT AUTHORITY\SYSTEM
-[lsass.exe]     [PROCESS: 580][SESSION: 0][TYPE: Primary][System] User: NT AUTHORITY\SYSTEM
-[svchost.exe]   [PROCESS: 676][SESSION: 0][TYPE: Primary][System] User: NT AUTHORITY\SYSTEM
-[fontdrvhost.exe]       [PROCESS: 700][SESSION: 0][TYPE: Primary][Low] User: Font Driver Host\UMFD-0
-[fontdrvhost.exe]       [PROCESS: 708][SESSION: 1][TYPE: Primary][Low] User: Font Driver Host\UMFD-1
-[svchost.exe]   [PROCESS: 776][SESSION: 0][TYPE: Primary][System] User: NT AUTHORITY\NETWORK SERVICE
-[dwm.exe]       [PROCESS: 860][SESSION: 1][TYPE: Primary][System] User: Window Manager\DWM-1
-[svchost.exe]   [PROCESS: 940][SESSION: 0][TYPE: Primary][System] User: NT AUTHORITY\NETWORK SERVICE 
+[winlogon.exe]          [PROCESS: 508]  [SESSION: 1]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
+[lsass.exe]             [PROCESS: 580]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
+[svchost.exe]           [PROCESS: 676]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
+[fontdrvhost.exe]       [PROCESS: 700]  [SESSION: 0]    [TYPE: Primary] [Low]       User: Font Driver Host\UMFD-0
+[fontdrvhost.exe]       [PROCESS: 708]  [SESSION: 1]    [TYPE: Primary] [Low]       User: Font Driver Host\UMFD-1
+[svchost.exe]           [PROCESS: 776]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\NETWORK SERVICE
+[dwm.exe]               [PROCESS: 860]  [SESSION: 1]    [TYPE: Primary] [System]    User: Window Manager\DWM-1
+[svchost.exe]           [PROCESS: 940]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\NETWORK SERVICE 
 (...)
-[cmd.exe]       [PROCESS: 1632][SESSION: 1][TYPE: Primary][High] User: ADCS1\Administrator
-[conhost.exe]   [PROCESS: 4260][SESSION: 1][TYPE: Primary][High] User: ADCS1\Administrator
-[impersonate-rs.exe]    [PROCESS: 3012][SESSION: 1][TYPE: Primary][High] User: ADCS1\Administrator 
+[cmd.exe]               [PROCESS: 1632] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator
+[conhost.exe]           [PROCESS: 4260] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator
+[impersonate-rs.exe]    [PROCESS: 3012] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator 
 ```
 
 ### `exec`
@@ -70,7 +81,11 @@ The `exec` command open the target process id in the `pid` argument, duplicate i
 X:\>whoami
 adcs1\administrator
 
-X:\>.\impersonate-rs.exe exec --pid 5540 --command "whoami"
+X:\>impersonate-rs.exe exec --pid 5540 --command "whoami"
+16 bytes read:
+waza\e.cartman
+
+X:\>impersonate-rs.exe exec -p 5540 -c "whoami"
 16 bytes read:
 waza\e.cartman 
 ```
@@ -86,7 +101,7 @@ Or directly on your **Rust** project like:
 irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "0.2.0" }
 ```
 
-Or
+Or with github repo:
 
 ```bash
 [dependencies]
@@ -99,6 +114,7 @@ irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.0" }
 use irs::utils::*;
 
 fn main() {
+    impersonate::se_priv_enable().expect("[!] Failed to enable privileges");
     token::enum_token().expect("[!] Failed to enumerate tokens");
 }
 ```
@@ -108,3 +124,7 @@ To see all the available functions use the following command to open the **Rust 
 ```bash
 cargo doc --open --no-deps
 ```
+
+## Demo
+
+![](./img/demo.gif)

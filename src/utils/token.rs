@@ -42,6 +42,7 @@ use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken};
 
 use crate::utils::impersonate::{ImpersonationLevel,IntegrityLevel};
 use crate::utils::common::*;
+use colored::*;
 
 // Structure for one Windows Token
 pub struct Token {
@@ -58,11 +59,22 @@ pub struct Token {
 // Display trait for Windows Token
 impl std::fmt::Display for Token{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // https://docs.rs/colored/2.0.0/x86_64-pc-windows-msvc/colored/control/fn.set_virtual_terminal.html
+        #[cfg(windows)]
+        control::set_virtual_terminal(true).unwrap();
+        let tokendisplay: ColoredString;
+        if vec!["High","System"].contains(&self.token_integrity.display_str()) {
+            tokendisplay = self.token_integrity.display_str().bold().red();
+        }
+        else {
+            tokendisplay = self.token_integrity.display_str().bold().green();
+        }
+        // Display
         if self.token_type == TokenPrimary {
-            write!(f, "[{}]\t[PROCESS: {}][SESSION: {}][TYPE: Primary][{}] User: {}", self.process_name,  self.process_id, self.session_id, self.token_integrity.display_str(), self.username)
+            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Primary] [{3: <6}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179),  self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), tokendisplay, self.username.bold())
         } else {
-            write!(f, "[{}]\t[PROCESS: {}][SESSION: {}][TYPE: Impersonation][{}] User: {}", self.process_name, self.process_id, self.session_id, self.token_impersonation.display_str(), self.username)
-        }   
+            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Impersonation] [{3: <6}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179), self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), self.token_impersonation.display_str(), self.username.bold())
+        }
     }
 }
 

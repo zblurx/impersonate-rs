@@ -25,10 +25,10 @@ pub enum ImpersonationLevel {
 impl ImpersonationLevel {
     pub fn display_str(&self) -> &'static str {
         match self {
-            ImpersonationLevel::Impersonation => "Impersonation",
-            ImpersonationLevel::Delegation => "Delegation",
-            ImpersonationLevel::Anonymous => "Anonymous",
-            ImpersonationLevel::Identification => "Identification",
+            ImpersonationLevel::Impersonation   => "Impersonation",
+            ImpersonationLevel::Delegation      => "Delegation",
+            ImpersonationLevel::Anonymous       => "Anonymous",
+            ImpersonationLevel::Identification  => "Identification",
         }
     }
 }
@@ -47,13 +47,13 @@ pub enum IntegrityLevel {
 impl IntegrityLevel {
     pub fn display_str(&self) -> &'static str {
         match self {
-            IntegrityLevel::Untrusted => "Untrusted",
-            IntegrityLevel::Low => "Low",
-            IntegrityLevel::Medium => "Medium",
-            IntegrityLevel::MediumPlus => "MediumPlus",
-            IntegrityLevel::High => "High",
-            IntegrityLevel::System => "System",
-            IntegrityLevel::ProtectedProcess => "ProtectedProcess",
+            IntegrityLevel::Untrusted           => "Untrusted",
+            IntegrityLevel::Low                 => "Low",
+            IntegrityLevel::Medium              => "Medium",
+            IntegrityLevel::MediumPlus          => "MediumPlus",
+            IntegrityLevel::High                => "High",
+            IntegrityLevel::System              => "System",
+            IntegrityLevel::ProtectedProcess    => "ProtectedProcess",
         }
     }
 }

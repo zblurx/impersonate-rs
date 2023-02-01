@@ -5,7 +5,7 @@ use args::*;
 use utils::*;
 
 use env_logger::Builder;
-use log::{info,error};
+use log::{info,debug,error};
 
 fn main() {
     // Get args
@@ -39,8 +39,8 @@ fn main() {
             }
             let res = impersonate(common_args.pid, common_args.cmd);
             match res {
-                Ok(res) => { info!("[+] Privileges enabled"); res },
-                Err(err) => { error!("[!] Failed to enable privileges: {err}"); false },
+                Ok(res) => { debug!("[+] Process impersonate and command executed"); res },
+                Err(err) => { error!("[!] Failed to impersonate process: {err}"); false },
             }
         }
         _ => {

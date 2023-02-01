@@ -1,7 +1,7 @@
 [package]
 name = "irs"
 description = "IRS (Impersonate-RS)"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["zblurx <>"]
 keywords = ["token", "windows", "win32", "impersonate", "impersonate-rs"]
