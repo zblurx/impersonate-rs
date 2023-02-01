@@ -54,7 +54,7 @@ fn cli() -> Command {
         )
 }
 
-///! Function to extract arguments
+/// Function to extract arguments
 pub fn extract_args() -> Options {
     
     let matches = cli().get_matches();

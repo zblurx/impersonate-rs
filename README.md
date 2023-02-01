@@ -4,6 +4,15 @@
 
 Reimplementation of [Defte](https://twitter.com/Defte_) [Impersonate](https://github.com/sensepost/impersonate) in plain Rust. For more informations about it, see this [blogpost](https://sensepost.com/blog/2022/abusing-windows-tokens-to-compromise-active-directory-without-touching-lsass/).
 
+## Summary
+
+- [Build](#build)
+- [Usage](#usage)
+    - [List process to impersonate](#list)
+    - [Exec command](#exec)
+    - [Library example](#library)
+- [Demo](#demo)
+
 ## Build
 
 ```bash
