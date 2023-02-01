@@ -1,12 +1,8 @@
 # IRS (Impersonate-RS)
 
-> 💡 IRS is a library version of [https://github.com/zblurx/impersonate-rs](https://github.com/zblurx/impersonate-rs)
+> 💡 IRS is a library version of [https://github.com/zblurx/impersonate-rs](https://github.com/zblurx/impersonate-rs), [zblurx](https://twitter.com/_zblurx)
 
 Reimplementation of [Defte](https://twitter.com/Defte_) [Impersonate](https://github.com/sensepost/impersonate) in plain Rust. For more informations about it, see this [blogpost](https://sensepost.com/blog/2022/abusing-windows-tokens-to-compromise-active-directory-without-touching-lsass/).
-
-## Disclaimer
-
-I did this in order to learn Rust, so please don't blame my shitty code.
 
 ## Build
 

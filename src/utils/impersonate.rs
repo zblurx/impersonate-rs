@@ -59,6 +59,7 @@ impl IntegrityLevel {
 }
 
 
+/// Function to impersonate process from PID and execute commande
 pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
     unsafe {
         let mut token_handle: HANDLE = std::mem::zeroed();
@@ -134,7 +135,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
 }
 
 
-///! Function to enable Windows Privileges SeDebugPrivilege and SeAssignPrimaryToken
+/// Function to enable Windows Privileges SeDebugPrivilege and SeAssignPrimaryToken
 pub fn se_priv_enable() -> Result<bool, String>{
     unsafe {
         // Enable SeDebugPrivilege

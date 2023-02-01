@@ -56,7 +56,7 @@ pub struct Token {
     token_integrity: IntegrityLevel,
 }
 
-// Display trait for Windows Token
+/// Display trait for Windows Token
 impl std::fmt::Display for Token{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // https://docs.rs/colored/2.0.0/x86_64-pc-windows-msvc/colored/control/fn.set_virtual_terminal.html
@@ -79,7 +79,7 @@ impl std::fmt::Display for Token{
 }
 
 
-///! Function to get all informations about Token
+/// Function to get all informations about Token
 #[allow(non_upper_case_globals)]
 pub fn get_token_information(token: *mut Token) -> Result<bool,String>{
     unsafe {
@@ -130,7 +130,7 @@ pub fn get_token_information(token: *mut Token) -> Result<bool,String>{
     Ok(true)
 }
 
-///! Function to get user information about one Token
+/// Function to get user information about one Token
 pub fn get_token_user_info(token: *mut Token) -> Result<bool, String>{
     unsafe {
         let mut size: u32 = 0;
@@ -160,7 +160,7 @@ pub fn get_token_user_info(token: *mut Token) -> Result<bool, String>{
     }
 }
 
-///! Function to get session id from one Token
+/// Function to get session id from one Token
 pub fn get_token_session_id(token: *mut Token) -> Result<bool, String> {
     unsafe {
         let mut size: u32 = 0;
@@ -175,7 +175,7 @@ pub fn get_token_session_id(token: *mut Token) -> Result<bool, String> {
     }
 }
 
-///! Function tu enumerate all Tokens
+/// Function tu enumerate all Tokens
 pub fn enum_token() -> Result<bool, String>{
     unsafe {
         let hsnapshot =  CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
