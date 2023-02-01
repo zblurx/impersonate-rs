@@ -39,21 +39,20 @@ use windows_sys::Win32::System::{
     Diagnostics::ToolHelp::{CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, PROCESSENTRY32, Process32First, Process32Next}};
 use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken};
 
-
 use crate::utils::impersonate::{ImpersonationLevel,IntegrityLevel};
 use crate::utils::common::*;
 use colored::*;
 
 // Structure for one Windows Token
 pub struct Token {
-    handle: HANDLE,
-    process_id: u32,
-    process_name: String,
-    session_id: u32,
-    username: String,
-    token_type: TOKEN_TYPE,
-    token_impersonation: ImpersonationLevel,
-    token_integrity: IntegrityLevel,
+    pub handle: HANDLE,
+    pub process_id: u32,
+    pub process_name: String,
+    pub session_id: u32,
+    pub username: String,
+    pub token_type: TOKEN_TYPE,
+    pub token_impersonation: ImpersonationLevel,
+    pub token_integrity: IntegrityLevel,
 }
 
 /// Display trait for Windows Token
@@ -71,9 +70,9 @@ impl std::fmt::Display for Token{
         }
         // Display
         if self.token_type == TokenPrimary {
-            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Primary] [{3: <6}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179),  self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), tokendisplay, self.username.bold())
+            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Primary] [{3: <9}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179),  self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), tokendisplay, self.username.bold())
         } else {
-            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Impersonation] [{3: <6}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179), self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), self.token_impersonation.display_str(), self.username.bold())
+            write!(f, "[{0: <32}] [PROCESS: {1: <5}] [SESSION: {2: <2}] [TYPE: Impersonation] [{3: <9}] [USER: {4: <28}]", self.process_name.bold().truecolor(97,221,179), self.process_id.to_string().bold().green(), self.session_id.to_string().bold(), self.token_impersonation.display_str(), self.username.bold())
         }
     }
 }

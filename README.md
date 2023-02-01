@@ -19,22 +19,27 @@ Reimplementation of [Defte](https://twitter.com/Defte_) [Impersonate](https://gi
 # Build it from docker
 git clone https://github.com/zblurx/impersonate-rs
 cd impersonate-rs
-make
+make release
 
-# or from cargo in your host
+# Or from cargo in your host
 make windows
 
-# build documentation
+# Build documentation
 cargo doc --open --no-deps
+
+# More information
+make help
 ```
 
 ## Usage
 
 Like a static binary :
 
-```bash
-X:\>impersonate-rs.exe --help
-Usage: impersonate-rs.exe <COMMAND>
+```cmd
+X:\>irs.exe --help
+IRS (Impersonate-RS) It's a windows token impersonation tool written in Rust. zblurx <https://twitter.com/_zblurx>
+
+Usage: irs.exe <COMMAND>
 
 Commands:
   list  List all process PID available to impersonate Tokens
@@ -46,10 +51,10 @@ Options:
 ```
 
 ```bash
-X:\>impersonate-rs.exe exec --help
+X:\>irs.exe exec --help
 Execute command line from impersonate PID
 
-Usage: impersonate-rs.exe exec [OPTIONS] --pid <pid> --command <command>
+Usage: irs.exe exec [OPTIONS] --pid <pid> --command <command>
 
 Options:
   -p, --pid <pid>          PID to impersonate
@@ -62,7 +67,7 @@ Options:
 
 The `list` command list processes, with their session id, token type and associated user.
 ```bash
-X:\>impersonate-rs.exe list
+X:\>irs.exe list
                   
 [winlogon.exe                    ] [PROCESS: 624  ] [SESSION: 1 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
 [lsass.exe                       ] [PROCESS: 672  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
@@ -91,11 +96,11 @@ The `exec` command open the target process id in the `pid` argument, duplicate i
 X:\>whoami
 adcs1\administrator
 
-X:\>impersonate-rs.exe exec --pid 5540 --command "whoami"
+X:\>irs.exe exec --pid 5540 --command "whoami"
 16 bytes read:
 waza\e.cartman
 
-X:\>impersonate-rs.exe exec -p 5540 -c "whoami"
+X:\>irs.exe exec -p 5540 -c "whoami"
 16 bytes read:
 waza\e.cartman 
 ```
@@ -124,8 +129,8 @@ irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.1" }
 use irs::utils::*;
 
 fn main() {
-    impersonate::se_priv_enable().expect("[!] Failed to enable privileges");
-    token::enum_token().expect("[!] Failed to enumerate tokens");
+    impersonate::se_priv_enable().expect("[!] Failed to run se_priv_enable()");
+    token::enum_token().expect("[!] [!] Failed to run enum_token()");
 }
 ```
 

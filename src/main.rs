@@ -5,7 +5,7 @@ use args::*;
 use utils::*;
 
 use env_logger::Builder;
-use log::{info,debug,error};
+use log::error;
 
 fn main() {
     // Get args
@@ -19,33 +19,37 @@ fn main() {
     match common_args.mode {
         Mode::List => {
             // List available Tokens
+            //se_priv_enable().expect("[!] Failed to run se_priv_enable()");
             let res = se_priv_enable();
             match res {
-                Ok(_res) => info!("[+] Privileges enabled"),
-                Err(err) => error!("[!] Failed to enable privileges: {err}"),
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run se_priv_enable(): {err}"),
             }
+            //enum_token().expect("[!] [!] Failed to run enum_token()");
             let res = enum_token();
             match res {
-                Ok(res) => res,
-                Err(err) => { error!("[!] Failed to enum tokens: {err}"); false },
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run enum_token(): {err}"),
             }
         }
         Mode::Exec => {
             // Get PID to impersonate Token and run command
+            //se_priv_enable().expect("[!] Failed to run se_priv_enable()");
             let res = se_priv_enable();
             match res {
-                Ok(_res) => info!("[+] Privileges enabled"),
-                Err(err) => error!("[!] Failed to enable privileges: {err}"),
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run se_priv_enable(): {err}"),
             }
+            //impersonate(common_args.pid, common_args.cmd).expect("[!] Failed to run impersonate()");
             let res = impersonate(common_args.pid, common_args.cmd);
             match res {
-                Ok(res) => { debug!("[+] Process impersonate and command executed"); res },
-                Err(err) => { error!("[!] Failed to impersonate process: {err}"); false },
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run impersonate(): {err}"),
             }
         }
         _ => {
             // Unknown Mode
-            error!("[!] Unknown mode, please check usage --help"); false
+            error!("[!] Unknown mode, please check usage --help");
         }
     };
 }

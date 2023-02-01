@@ -17,7 +17,8 @@ pub struct Options {
 }
 
 fn cli() -> Command {
-    Command::new("impersonate-rs")
+    Command::new("irs")
+        .about("IRS (Impersonate-RS) It's a windows token impersonation tool written in Rust. zblurx <https://twitter.com/_zblurx>")
         .subcommand_required(true)
         .arg_required_else_help(true)
         .allow_external_subcommands(true)

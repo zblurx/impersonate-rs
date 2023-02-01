@@ -13,6 +13,7 @@ use windows_sys::Win32::System::{Threading::{PROCESS_QUERY_INFORMATION, CreatePr
 use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess};
 
 use crate::utils::FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID;
+use log::trace;
 
 #[repr(i32)]
 pub enum ImpersonationLevel {
@@ -58,9 +59,12 @@ impl IntegrityLevel {
     }
 }
 
-
 /// Function to impersonate process from PID and execute commande
 pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
+    // Debug information -vv
+    trace!("[?] PID to impersonate: {}",pid);
+    trace!("[?] Command to execute: {}",command);
+
     unsafe {
         let mut token_handle: HANDLE = std::mem::zeroed();
         let process_handle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
@@ -123,7 +127,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("ReadFile"), Error::last_os_error()).to_owned());
         }
-        println!("{} bytes read:",bytes_read);
+        trace!("[?] {} bytes read\n",bytes_read);
         println!("{}",String::from_utf8_lossy(&mut buffer_read[..(bytes_read as usize)]));
 
         CloseHandle(process_handle);
@@ -139,14 +143,16 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
 pub fn se_priv_enable() -> Result<bool, String>{
     unsafe {
         // Enable SeDebugPrivilege
-        let mut token_handle:HANDLE = std::mem::zeroed();
+        trace!("[?] Trying to enable SeDebugPrivilege privilege");
 
+        let mut token_handle:HANDLE = std::mem::zeroed();
         let mut privilege: TOKEN_PRIVILEGES = std::mem::zeroed();
         privilege.PrivilegeCount = 1;
         privilege.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
         if OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &mut token_handle) == 0 {
             return Err(format!("{} Error: {}",obfstr!("OpenProcessToken"), Error::last_os_error()).to_owned());
-        };
+        }
 
         if LookupPrivilegeValueW(null_mut(), SE_DEBUG_NAME, &mut privilege.Privileges[0].Luid) == 0 {
             return Err(format!("{} Error: {}",obfstr!("LookupPrivilegeValueW"), Error::last_os_error()).to_owned());
@@ -161,14 +167,16 @@ pub fn se_priv_enable() -> Result<bool, String>{
         }
 
         // Enable SeAssignPrimaryToken
-        let mut token_handle:HANDLE = std::mem::zeroed();
+        trace!("[?] Trying to enable SeAssignPrimaryToken privilege");
 
+        let mut token_handle:HANDLE = std::mem::zeroed();
         let mut privilege: TOKEN_PRIVILEGES = std::mem::zeroed();
         privilege.PrivilegeCount = 1;
         privilege.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
         if OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &mut token_handle) == 0 {
             return Err(format!("{} Error: {}",obfstr!("OpenProcessToken"), Error::last_os_error()).to_owned());
-        };
+        }
 
         if LookupPrivilegeValueW(null_mut(), SE_ASSIGNPRIMARYTOKEN_NAME, &mut privilege.Privileges[0].Luid) == 0 {
             return Err(format!("{} Error: {}",obfstr!("LookupPrivilegeValueW"), Error::last_os_error()).to_owned());
@@ -181,6 +189,7 @@ pub fn se_priv_enable() -> Result<bool, String>{
         if CloseHandle(token_handle as HANDLE) == 0 {
             return Err(format!("{} Error: {}",obfstr!("CloseHandle"), Error::last_os_error()).to_owned());
         }
+
         return Ok(true);
     }
 }
