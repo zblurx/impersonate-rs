@@ -116,7 +116,7 @@ irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.1" }
 ```main.rs```:
 
 ```rust
-use irs::*;
+use irs::utils::*;
 
 fn main() {
     impersonate::se_priv_enable().expect("[!] Failed to enable privileges");
