@@ -1,9 +1,13 @@
 [package]
-name = "impersonate-rs"
-version = "0.1.0"
+name = "irs"
+description = "IRS (Impersonate-RS)"
+version = "0.2.0"
 edition = "2021"
-author = "zblurx"
-description = "Rusty Impersonate"
+authors = ["zblurx <>"]
+keywords = ["token", "windows", "win32", "impersonate", "impersonate-rs"]
+repository = "https://github.com/zblurx/impersonate-rs"
+homepage = "https://github.com/zblurx/impersonate-rs"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,24 +20,27 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-clap = { version = "4.0", features = ["derive"] }
+clap = "4.0"
 obfstr = "0.4.1"
+log = "0.4"
+env_logger = "0.9"
+colored = "2"
 
 [dependencies.windows-sys]
 version = "0.45.0"
 features = [
-"Win32_Foundation",
-"Win32_Security",
-"Win32_Storage_FileSystem",
-"Win32_System_Com_StructuredStorage",
-"Win32_System_Diagnostics_Debug",
-"Win32_System_Diagnostics_ToolHelp",
-"Win32_System_Threading",
-"Win32_System_WindowsProgramming",
-"Win32_System_SystemServices",
-"Win32_System_Memory",
-"Win32_System_Kernel",
-"Win32_System_IO",
-"Win32_System_Pipes",
-"Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Threading",
+    "Win32_System_WindowsProgramming",
+    "Win32_System_SystemServices",
+    "Win32_System_Memory",
+    "Win32_System_Kernel",
+    "Win32_System_IO",
+    "Win32_System_Pipes",
+    "Win32_UI_WindowsAndMessaging",
 ]

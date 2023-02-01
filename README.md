@@ -1,4 +1,6 @@
-# impersonate-rs
+# IRS (Impersonate-RS)
+
+> 💡 IRS is a library version of [https://github.com/zblurx/impersonate-rs](https://github.com/zblurx/impersonate-rs)
 
 Reimplementation of [Defte](https://twitter.com/Defte_) [Impersonate](https://github.com/sensepost/impersonate) in plain Rust. For more informations about it, see this [blogpost](https://sensepost.com/blog/2022/abusing-windows-tokens-to-compromise-active-directory-without-touching-lsass/).
 
@@ -8,15 +10,24 @@ I did this in order to learn Rust, so please don't blame my shitty code.
 
 ## Build
 
-```
+```bash
+# Build it from docker
 git clone https://github.com/zblurx/impersonate-rs
 cd impersonate-rs
 make
+
+# or from cargo in your host
+make windows
+
+# build documentation
+cargo doc --open --no-deps
 ```
 
 ## Usage
 
-```cmd
+Like a static binary :
+
+```bash
 .\impersonate-rs.exe --help
 Rusty Impersonate
 
@@ -34,7 +45,7 @@ Options:
 ### `list`
 
 The `list` command list processes, with their session id, token type and associated user.
-```cmd
+```bash
 X:\>.\impersonate-rs.exe list
                   
 [winlogon.exe]  [PROCESS: 508][SESSION: 1][TYPE: Primary][System] User: NT AUTHORITY\SYSTEM
@@ -62,4 +73,38 @@ adcs1\administrator
 X:\>.\impersonate-rs.exe exec --pid 5540 --command "whoami"
 16 bytes read:
 waza\e.cartman 
+```
+
+### `library`
+
+Or directly on your **Rust** project like:
+
+```Cargo.toml```:
+
+```bash
+[dependencies]
+irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "0.2.0" }
+```
+
+Or
+
+```bash
+[dependencies]
+irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.0" }
+```
+
+```main.rs```:
+
+```rust
+use irs::utils::*;
+
+fn main() {
+    token::enum_token().expect("[!] Failed to enumerate tokens");
+}
+```
+
+To see all the available functions use the following command to open the **Rust documentation**.
+
+```bash
+cargo doc --open --no-deps
 ```
