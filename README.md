@@ -59,18 +59,23 @@ The `list` command list processes, with their session id, token type and associa
 ```bash
 X:\>impersonate-rs.exe list
                   
-[winlogon.exe]          [PROCESS: 508]  [SESSION: 1]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
-[lsass.exe]             [PROCESS: 580]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
-[svchost.exe]           [PROCESS: 676]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\SYSTEM
-[fontdrvhost.exe]       [PROCESS: 700]  [SESSION: 0]    [TYPE: Primary] [Low]       User: Font Driver Host\UMFD-0
-[fontdrvhost.exe]       [PROCESS: 708]  [SESSION: 1]    [TYPE: Primary] [Low]       User: Font Driver Host\UMFD-1
-[svchost.exe]           [PROCESS: 776]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\NETWORK SERVICE
-[dwm.exe]               [PROCESS: 860]  [SESSION: 1]    [TYPE: Primary] [System]    User: Window Manager\DWM-1
-[svchost.exe]           [PROCESS: 940]  [SESSION: 0]    [TYPE: Primary] [System]    User: NT AUTHORITY\NETWORK SERVICE 
+[winlogon.exe                    ] [PROCESS: 624  ] [SESSION: 1 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[lsass.exe                       ] [PROCESS: 672  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[svchost.exe                     ] [PROCESS: 780  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[fontdrvhost.exe                 ] [PROCESS: 788  ] [SESSION: 0 ] [TYPE: Primary] [Low   ] [USER: Font Driver Host\UMFD-0     ]
+[fontdrvhost.exe                 ] [PROCESS: 796  ] [SESSION: 1 ] [TYPE: Primary] [Low   ] [USER: Font Driver Host\UMFD-1     ]
+[svchost.exe                     ] [PROCESS: 888  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE RÉSEAU  ]
+[svchost.exe                     ] [PROCESS: 948  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[dwm.exe                         ] [PROCESS: 412  ] [SESSION: 1 ] [TYPE: Primary] [System] [USER: Window Manager\DWM-1        ]
+[svchost.exe                     ] [PROCESS: 460  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[svchost.exe                     ] [PROCESS: 696  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE LOCAL   ]
 (...)
-[cmd.exe]               [PROCESS: 1632] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator
-[conhost.exe]           [PROCESS: 4260] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator
-[impersonate-rs.exe]    [PROCESS: 3012] [SESSION: 1]    [TYPE: Primary] [High]      User: ADCS1\Administrator 
+[svchost.exe                     ] [PROCESS: 836  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE LOCAL   ]
+[svchost.exe                     ] [PROCESS: 908  ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE LOCAL   ]
+[svchost.exe                     ] [PROCESS: 1060 ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE LOCAL   ]
+[svchost.exe                     ] [PROCESS: 1088 ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\SERVICE LOCAL   ]
+[svchost.exe                     ] [PROCESS: 1124 ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
+[svchost.exe                     ] [PROCESS: 1176 ] [SESSION: 0 ] [TYPE: Primary] [System] [USER: AUTORITE NT\Système         ]
 ```
 
 ### `exec`
