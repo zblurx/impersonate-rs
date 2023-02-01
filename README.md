@@ -96,12 +96,10 @@ The `exec` command open the target process id in the `pid` argument, duplicate i
 X:\>whoami
 adcs1\administrator
 
-X:\>irs.exe exec --pid 5540 --command "whoami"
-16 bytes read:
+X:\>irs.exe exec --pid 5540 --command whoami
 waza\e.cartman
 
-X:\>irs.exe exec -p 5540 -c "whoami"
-16 bytes read:
+X:\>irs.exe exec -p 5540 -c whoami
 waza\e.cartman 
 ```
 
@@ -130,7 +128,7 @@ use irs::utils::*;
 
 fn main() {
     impersonate::se_priv_enable().expect("[!] Failed to run se_priv_enable()");
-    token::enum_token().expect("[!] [!] Failed to run enum_token()");
+    token::enum_token().expect("[!] Failed to run enum_token()");
 }
 ```
 
