@@ -103,20 +103,20 @@ Or directly on your **Rust** project like:
 
 ```bash
 [dependencies]
-irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "0.2.0" }
+irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "0.2.1" }
 ```
 
 Or with github repo:
 
 ```bash
 [dependencies]
-irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.0" }
+irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.1" }
 ```
 
 ```main.rs```:
 
 ```rust
-use irs::utils::*;
+use irs::*;
 
 fn main() {
     impersonate::se_priv_enable().expect("[!] Failed to enable privileges");
