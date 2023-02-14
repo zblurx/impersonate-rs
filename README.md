@@ -141,3 +141,7 @@ cargo doc --open --no-deps
 ## Demo
 
 ![](./img/demo.gif)
+
+## Contributors
+
+Many thanks to [g0h4n](https://twitter.com/g0h4n_0) for his contribution to the repo (made it a library, added color, clean up the code, ect.)
