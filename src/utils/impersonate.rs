@@ -178,15 +178,6 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             trace!("[?] Waiting for command to finish");
         }
 
-        // if ConnectNamedPipe(read_pipe, null_mut()) == 0 {
-        //     CloseHandle(process_handle);
-        //     CloseHandle(read_pipe);
-        //     CloseHandle(write_pipe);
-        //     CloseHandle(token_handle);
-        //     CloseHandle(duplicate_token_handle);
-        //     return Err(format!("{} Error: {}",obfstr!("ConnectNamedPipe"), Error::last_os_error()).to_owned());
-        // }
-
         if exit_code != 0{
             return Err(format!("{} {}: {}",obfstr!("Process spawned finish with"), exit_code, Error::last_os_error()).to_owned());
 
