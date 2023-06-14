@@ -7,7 +7,7 @@ Reimplementation of [Defte](https://twitter.com/Defte_) [Impersonate](https://gi
 The token impersonation approach is a bit different from Defte Impersonate : here you have to select a PID where you want to impersonate the Primary Token, then `irs.exe` will:
 1. Duplicate the token
 2. Spawn a named pipe
-3. Execute the command with the targeted token through `CreateProcessAsUserW` and output the result to the named pipe
+3. Execute the command with the targeted token through `CreateProcessWithTokenW` and output the result to the named pipe
 4. Collect the command output from the named pipe
 5. Print the command output
 
