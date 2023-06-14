@@ -1,19 +1,18 @@
 use core::time;
-use std::mem::{zeroed, size_of_val};
+use std::mem::{zeroed};
 use std::thread;
 use std::io::Error;
-use rand::{distributions::Alphanumeric, Rng};
 use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
-use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR, SetSecurityDescriptorDacl};
+use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
 use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
 use std::ffi::c_void;
-use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE, TRUE};
-use windows_sys::Win32::Storage::FileSystem::{PIPE_ACCESS_DUPLEX, ReadFile};
+use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE};
+use windows_sys::Win32::Storage::FileSystem::{ReadFile};
 use windows_sys::core::PCSTR;
 use std::ptr::null_mut;
 use obfstr::obfstr;
-use windows_sys::Win32::System::Pipes::{CreateNamedPipeA, PIPE_TYPE_MESSAGE, ConnectNamedPipe, PIPE_WAIT, PIPE_NOWAIT, CreatePipe};
+use windows_sys::Win32::System::Pipes::{CreatePipe};
 use windows_sys::{Win32::{Foundation::{HANDLE, CloseHandle}, Security::{SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, LookupPrivilegeValueW, AdjustTokenPrivileges, TOKEN_PRIVILEGES, DuplicateTokenEx, SecurityImpersonation, TokenPrimary, SecurityDelegation, SecurityAnonymous, SecurityIdentification}}, core::PWSTR};
 use windows_sys::Win32::System::{Threading::{PROCESS_QUERY_INFORMATION, CreateProcessWithTokenW, STARTUPINFOW, PROCESS_INFORMATION}, SystemServices::{SE_DEBUG_NAME, MAXIMUM_ALLOWED, SECURITY_MANDATORY_LOW_RID, SECURITY_MANDATORY_MEDIUM_RID, SECURITY_MANDATORY_HIGH_RID, SECURITY_MANDATORY_SYSTEM_RID, SECURITY_MANDATORY_UNTRUSTED_RID, SECURITY_MANDATORY_PROTECTED_PROCESS_RID}};
 use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE, STARTF_USESTDHANDLES, STARTF_USESHOWWINDOW, CREATE_NO_WINDOW};
@@ -94,8 +93,6 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
 
         trace!("[?] Initialize PSECURITY_DESCRIPTOR");
 
-        let pipe_str: String = rand::thread_rng().sample_iter(&Alphanumeric).take(12).collect();
-
         let mut sa : SECURITY_ATTRIBUTES = zeroed();
         let mut sd : PSECURITY_DESCRIPTOR = zeroed();
 
@@ -106,7 +103,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             return Err(format!("{} Error: {}",obfstr!("InitializeSecurityDescriptor"), Error::last_os_error()).to_owned());
         }
 
-        // sa.lpSecurityDescriptor = sd;
+        sa.lpSecurityDescriptor = sd;
 
         trace!("[?] Initialize SECURITY_ATTRIBUTES");
 
@@ -120,11 +117,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         
         let mut read_pipe: HANDLE = std::mem::zeroed();
         let mut write_pipe: HANDLE = std::mem::zeroed();
-        // spawn NamedPipe
-        // let pipe_name: PCSTR = format!("\\\\.\\pipe\\{}\0", pipe_str).as_ptr() as *const u8 as PCSTR;
-        // let server_pipe =  CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX , PIPE_TYPE_MESSAGE | PIPE_WAIT, 10, 16384, 16384,0,&sa);
+     
         if CreatePipe(&mut read_pipe, &mut write_pipe, &sa, 0) == FALSE {
-            // Handle Error
             return Err(format!("{} Error: {}",obfstr!("CreatePipe"), Error::last_os_error()).to_owned());
         }; 
 
