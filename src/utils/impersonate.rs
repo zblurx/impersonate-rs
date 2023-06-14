@@ -2,6 +2,7 @@ use core::time;
 use std::mem::{zeroed};
 use std::thread;
 use std::io::Error;
+use colored::Colorize;
 use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
 use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
@@ -17,8 +18,8 @@ use windows_sys::{Win32::{Foundation::{HANDLE, CloseHandle}, Security::{SE_PRIVI
 use windows_sys::Win32::System::{Threading::{PROCESS_QUERY_INFORMATION, CreateProcessWithTokenW, STARTUPINFOW, PROCESS_INFORMATION}, SystemServices::{SE_DEBUG_NAME, MAXIMUM_ALLOWED, SECURITY_MANDATORY_LOW_RID, SECURITY_MANDATORY_MEDIUM_RID, SECURITY_MANDATORY_HIGH_RID, SECURITY_MANDATORY_SYSTEM_RID, SECURITY_MANDATORY_UNTRUSTED_RID, SECURITY_MANDATORY_PROTECTED_PROCESS_RID}};
 use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE, STARTF_USESTDHANDLES, STARTF_USESHOWWINDOW, CREATE_NO_WINDOW};
 
-use crate::utils::FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID;
-use log::trace;
+use crate::utils::{FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID, Token, get_token_user_info};
+use log::{trace, info};
 
 #[repr(i32)]
 pub enum ImpersonationLevel {
@@ -83,6 +84,21 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             return Err(format!("{} Error: {}",obfstr!("OpenProcessToken"), Error::last_os_error()).to_owned());
         };
 
+        let mut token = Token {
+            handle: token_handle,
+            username: "".to_owned(),
+            process_id: pid,
+            process_name: "".to_owned(),
+            session_id: 0,
+            token_impersonation: ImpersonationLevel::Anonymous,
+            token_integrity: IntegrityLevel::Untrusted,
+            token_type: 0,
+        };
+
+        if let Ok(_) = get_token_user_info(&mut token){
+            info!("{} {}", obfstr!("Impersonate user"),&token.username.bold());
+        }
+
         let mut duplicate_token_handle: HANDLE = std::mem::zeroed();
         if DuplicateTokenEx(token_handle, MAXIMUM_ALLOWED, null_mut(), SecurityDelegation, TokenPrimary, &mut duplicate_token_handle) == 0 {
             CloseHandle(process_handle);
@@ -90,6 +106,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("DuplicateTokenEx"), Error::last_os_error()).to_owned());
         };
+
+        trace!("[?] Token successfully duplicated");
 
         trace!("[?] Initialize PSECURITY_DESCRIPTOR");
 
