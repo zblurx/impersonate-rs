@@ -5,10 +5,12 @@ use std::io::Error;
 use colored::Colorize;
 use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
 use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
+use windows_sys::Win32::System::Environment::CreateEnvironmentBlock;
+use windows_sys::Win32::System::SystemInformation::GetSystemDirectoryW;
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
 use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
 use std::ffi::c_void;
-use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE};
+use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE, MAX_PATH};
 use windows_sys::Win32::Storage::FileSystem::{ReadFile};
 use windows_sys::core::PCSTR;
 use std::ptr::null_mut;
@@ -16,7 +18,7 @@ use obfstr::obfstr;
 use windows_sys::Win32::System::Pipes::{CreatePipe};
 use windows_sys::{Win32::{Foundation::{HANDLE, CloseHandle}, Security::{SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, LookupPrivilegeValueW, AdjustTokenPrivileges, TOKEN_PRIVILEGES, DuplicateTokenEx, SecurityImpersonation, TokenPrimary, SecurityDelegation, SecurityAnonymous, SecurityIdentification}}, core::PWSTR};
 use windows_sys::Win32::System::{Threading::{PROCESS_QUERY_INFORMATION, CreateProcessWithTokenW, STARTUPINFOW, PROCESS_INFORMATION}, SystemServices::{SE_DEBUG_NAME, MAXIMUM_ALLOWED, SECURITY_MANDATORY_LOW_RID, SECURITY_MANDATORY_MEDIUM_RID, SECURITY_MANDATORY_HIGH_RID, SECURITY_MANDATORY_SYSTEM_RID, SECURITY_MANDATORY_UNTRUSTED_RID, SECURITY_MANDATORY_PROTECTED_PROCESS_RID}};
-use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE, STARTF_USESTDHANDLES, STARTF_USESHOWWINDOW, CREATE_NO_WINDOW};
+use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken, GetCurrentProcess, GetExitCodeProcess, LOGON_WITH_PROFILE, STARTF_USESTDHANDLES, STARTF_USESHOWWINDOW, CREATE_NO_WINDOW, CREATE_UNICODE_ENVIRONMENT};
 
 use crate::utils::{FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID, Token, get_token_user_info};
 use log::{trace, info};
@@ -142,26 +144,41 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
 
         trace!("[?] Spawned named pipes");
 
+        let mut environment_block = null_mut();
+
+        if CreateEnvironmentBlock(
+            &mut environment_block,
+            token_handle,
+            FALSE,
+        ) == FALSE {
+            return Err(format!("{} Error: {}",obfstr!("CreateEnvironmentBlock"), Error::last_os_error()).to_owned());
+        }
+
         let mut si: STARTUPINFOW = std::mem::zeroed();
         let mut pi: PROCESS_INFORMATION = std::mem::zeroed();
 
         si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.cb = std::mem::size_of::<STARTUPINFOW>() as u32;
         si.hStdOutput = write_pipe;
         si.hStdError = write_pipe;
+        si.lpDesktop = "WinSta0\\Default\0".encode_utf16().collect::<Vec<u16>>().as_mut_ptr();
         si.wShowWindow = SW_HIDE as u16;
 
+        let mut working_dir = Vec::with_capacity(MAX_PATH as usize);
+        GetSystemDirectoryW(working_dir.as_mut_ptr(), MAX_PATH);
+
         let mut cmd = (format!("{}{}",obfstr!("cmd.exe /C "),command).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
-        let working_dir = (format!("{}",obfstr!("C:\\Windows\\System32")).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
+
         trace!("[?] Command to be executed: {:?}",String::from_utf16(&cmd).expect("command"));
         if CreateProcessWithTokenW(
             duplicate_token_handle,
             LOGON_WITH_PROFILE,
             null_mut(),
             cmd.as_mut_ptr() as *mut _ as PWSTR,
-            CREATE_NO_WINDOW,
-            FALSE as *const c_void,
+            CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
+            environment_block,
             working_dir.as_ptr(),
-            &si ,
+            &si,
             &mut pi
         ) == 0 {
             CloseHandle(process_handle);
