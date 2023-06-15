@@ -11,7 +11,7 @@ The token impersonation approach is a bit different from Defte Impersonate : her
 4. Collect the command output from the named pipe
 5. Print the command output
 
-This approach will allow you to impersonate any user on the target computer as long as you have administrator privileges (No NT SYSTEM needed) and is usable with and without GUI. Note that some command won't work without GUI (ex: `whoami`) due to session issues.
+This approach will allow you to impersonate any user on the target computer as long as you have administrator privileges (No NT SYSTEM needed) and is usable with and without GUI.
 
 ## Summary
 
@@ -106,9 +106,11 @@ X:\>whoami
 adcs1\administrator
 
 X:\>irs.exe exec --pid 5540 --command whoami
+[2023-06-15T09:17:00Z INFO  irs::utils::impersonate] Impersonate user WAZA\e.cartman
 waza\e.cartman
 
 X:\>irs.exe exec -p 5540 -c whoami
+[2023-06-15T09:17:00Z INFO  irs::utils::impersonate] Impersonate user WAZA\e.cartman
 waza\e.cartman 
 ```
 

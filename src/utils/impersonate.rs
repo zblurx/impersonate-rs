@@ -5,7 +5,7 @@ use std::io::Error;
 use colored::Colorize;
 use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
 use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
-use windows_sys::Win32::System::Environment::CreateEnvironmentBlock;
+use windows_sys::Win32::System::Environment::{CreateEnvironmentBlock, DestroyEnvironmentBlock};
 use windows_sys::Win32::System::SystemInformation::GetSystemDirectoryW;
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
 use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
@@ -185,6 +185,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             CloseHandle(read_pipe);
             CloseHandle(write_pipe);
             CloseHandle(token_handle);
+            DestroyEnvironmentBlock(environment_block);
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("CreateProcessWithTokenW"), Error::last_os_error()).to_owned());
         }
@@ -207,9 +208,14 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             trace!("[?] Waiting for command to finish");
         }
 
-        if exit_code != 0{
+        if exit_code != 0 {
+            CloseHandle(process_handle);
+            CloseHandle(token_handle);
+            CloseHandle(read_pipe);
+            CloseHandle(write_pipe);
+            DestroyEnvironmentBlock(environment_block);
+            CloseHandle(duplicate_token_handle);
             return Err(format!("{} {}: {}",obfstr!("Process spawned finish with"), exit_code, Error::last_os_error()).to_owned());
-
         }
 
         if ReadFile(read_pipe, buffer_read.as_mut_ptr() as *mut c_void, buffer_read.len() as u32, &mut bytes_read, null_mut())  == 0 {
@@ -217,6 +223,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             CloseHandle(token_handle);
             CloseHandle(read_pipe);
             CloseHandle(write_pipe);
+            DestroyEnvironmentBlock(environment_block);
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("ReadFile"), Error::last_os_error()).to_owned());
         }
@@ -227,6 +234,7 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         CloseHandle(read_pipe);
         CloseHandle(write_pipe);
         CloseHandle(token_handle);
+        DestroyEnvironmentBlock(environment_block);
         CloseHandle(duplicate_token_handle);
 
         return Ok(true)
