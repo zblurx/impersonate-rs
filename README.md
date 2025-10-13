@@ -179,23 +179,24 @@ Or directly on your **Rust** project like:
 
 ```bash
 [dependencies]
-irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "0.2.1" }
+irs = { path = "/data/02-GIT/github/impersonate-rs/", version = "1.0.0" }
 ```
 
 Or with github repo:
 
 ```bash
 [dependencies]
-irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "0.2.1" }
+irs = { git = "https://github.com/g0h4n/impersonate-rs", version = "1.0.0" }
 ```
 
 ```main.rs```:
 
 ```rust
-use irs::utils::*;
+use irs::*;
 
 fn main() {
-    impersonate::se_priv_enable().expect("[!] Failed to run se_priv_enable()");
+    // List process
+    impersonate::privileges::enabling_sedebug().expect("[!] Failed to run enabling_sedebug()");
     token::enum_token().expect("[!] Failed to run enum_token()");
 }
 ```
