@@ -3,8 +3,9 @@ use clap::{Arg, ArgAction, value_parser, Command};
 
 #[derive(Debug)]
 pub enum Mode {
-    Exec,
     List,
+    Exec,
+    Spawn,
     Unknown,
 }
 
@@ -32,7 +33,7 @@ fn cli() -> Command {
         )
         .subcommand(
             Command::new("exec")
-                .about("Execute command line from impersonate PID")
+                .about("Execute command line from impersonate PID and get output")
                 .arg(Arg::new("pid")
                     .short('p')
                     .long("pid")
@@ -44,6 +45,29 @@ fn cli() -> Command {
                     .short('c')
                     .long("command")
                     .help("Command to execute")
+                    .required(true)
+                    .value_parser(value_parser!(String))
+                )
+                .arg(Arg::new("v")
+                    .short('v')
+                    .help("Set the level of verbosity")
+                    .action(ArgAction::Count),
+                )
+        )
+        .subcommand(
+            Command::new("spawn")
+                .about("Spawn new process from impersonate PID")
+                .arg(Arg::new("pid")
+                    .short('p')
+                    .long("pid")
+                    .help("PID to impersonate")
+                    .required(true)
+                    .value_parser(value_parser!(u32))
+                )
+                .arg(Arg::new("binary")
+                    .short('b')
+                    .long("binary")
+                    .help("Binary process to spawn (example: C:\\Windows\\System32\\cmd.exe")
                     .required(true)
                     .value_parser(value_parser!(String))
                 )
@@ -77,6 +101,16 @@ pub fn extract_args() -> Options {
             mode = Mode::Exec;
             pid = sub_matches.get_one::<u32>("pid").map(|s| s.to_owned()).unwrap();
             cmd = sub_matches.get_one::<String>("command").map(|s| s.as_str()).unwrap();
+            v = match sub_matches.get_count("v") {
+                0 => log::LevelFilter::Info,
+                1 => log::LevelFilter::Debug,
+                _ => log::LevelFilter::Trace,
+            };
+        }
+        Some(("spawn", sub_matches)) => {
+            mode = Mode::Spawn;
+            pid = sub_matches.get_one::<u32>("pid").map(|s| s.to_owned()).unwrap();
+            cmd = sub_matches.get_one::<String>("binary").map(|s| s.as_str()).unwrap();
             v = match sub_matches.get_count("v") {
                 0 => log::LevelFilter::Info,
                 1 => log::LevelFilter::Debug,

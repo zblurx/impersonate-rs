@@ -1,6 +1,9 @@
 use std::slice;
-use windows_sys::{Win32::System::{ SystemServices::{SECURITY_MANDATORY_MEDIUM_PLUS_RID}}, core::PWSTR};
 
+use windows_sys::{
+    Win32::System::SystemServices::SECURITY_MANDATORY_MEDIUM_PLUS_RID,
+    core::PWSTR
+};
 pub const FIXED_SECURITY_MANDATORY_MEDIUM_PLUS_RID: i32 = SECURITY_MANDATORY_MEDIUM_PLUS_RID as i32;
 
 pub fn pwstr_to_string(buffer: PWSTR) -> String{

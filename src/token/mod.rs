@@ -39,7 +39,7 @@ use windows_sys::Win32::System::{
     Diagnostics::ToolHelp::{CreateToolhelp32Snapshot, TH32CS_SNAPPROCESS, PROCESSENTRY32, Process32First, Process32Next}};
 use windows_sys::Win32::System::Threading::{OpenProcess, OpenProcessToken};
 
-use crate::utils::impersonate::{ImpersonationLevel,IntegrityLevel};
+use crate::impersonate::{ImpersonationLevel, IntegrityLevel};
 use crate::utils::common::*;
 use colored::*;
 
@@ -76,7 +76,6 @@ impl std::fmt::Display for Token{
         }
     }
 }
-
 
 /// Function to get all informations about Token
 #[allow(non_upper_case_globals)]
@@ -174,7 +173,7 @@ pub fn get_token_session_id(token: *mut Token) -> Result<bool, String> {
     }
 }
 
-/// Function tu enumerate all Tokens
+/// Function tu enumerate all Tokens need SeDebugPrivilege enabled
 pub fn enum_token() -> Result<bool, String>{
     unsafe {
         let hsnapshot =  CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
