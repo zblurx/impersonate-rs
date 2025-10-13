@@ -51,8 +51,8 @@ use crate::token::{Token, get_token_user_info};
 /// Function to impersonate process from PID and execute commande line with token privileges
 pub fn run_command(pid: u32, command: String) -> Result<bool, String> {
     // Debug information -vv
-    trace!("[?] PID to impersonate: {}",pid);
-    trace!("[?] Command to execute: {}",command);
+    trace!("[?] PID to impersonate: {}", pid);
+    trace!("[?] Command to execute: {}", command);
 
     unsafe {
         let mut token_handle: HANDLE = std::mem::zeroed();
