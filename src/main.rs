@@ -44,6 +44,11 @@ fn main() {
                 Ok(_s) => { () },
                 Err(err) => error!("[!] Failed to run enabling_seimpersonate(): {err}"),
             }
+            let res = enabling_sedebug();
+            match res {
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run enabling_sedebug(): {err}"),
+            }
             //run_command(common_args.pid, common_args.cmd).expect("[!] Failed to run run_command()");
             let res = run_command(common_args.pid, common_args.cmd);
             match res {
@@ -58,6 +63,11 @@ fn main() {
             match res {
                 Ok(_s) => { () },
                 Err(err) => error!("[!] Failed to run enabling_seimpersonate(): {err}"),
+            }
+            let res = enabling_sedebug();
+            match res {
+                Ok(_s) => { () },
+                Err(err) => error!("[!] Failed to run enabling_sedebug(): {err}"),
             }
             //spawn_process(common_args.pid, common_args.cmd).expect("[!] Failed to run spawn_process()");
             let res = spawn_process(common_args.pid, common_args.cmd);
