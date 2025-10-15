@@ -7,6 +7,7 @@ authors = ["zblurx <seigneuret.thomas@protonmail.com>", "g0h4n <g0h4n_0@protonma
 keywords = ["token", "windows", "win32", "impersonate", "impersonate-rs"]
 repository = "https://github.com/zblurx/impersonate-rs"
 homepage = "https://github.com/zblurx/impersonate-rs"
+license-file = "LICENSE"
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
